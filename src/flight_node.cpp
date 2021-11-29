@@ -1,14 +1,10 @@
 /**
- * @file offb_node.cpp
- * @brief Offboard control example node, written with MAVROS version 0.19.x, PX4 Pro Flight
- * Stack and tested in Gazebo SITL
+ * @file flight_node.cpp
  */
 
 #include <ros/ros.h>
-#include <geographic_msgs/GeoPoint.h>
-#include <mavros_msgs/HilGPS.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <mavros_msgs/CommandHome.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
@@ -20,17 +16,15 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "offb_node");
+    ros::init(argc, argv, "flight_node");
     ros::NodeHandle nh;
 
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>
             ("mavros/state", 10, state_cb);
-    ros::Publisher hil_gps_pub = nh.advertise<mavros_msgs::HilGPS>
-            ("/mavros/hil/gps", 10);
     ros::Publisher velocity_pub = nh.advertise<geometry_msgs::TwistStamped>
             ("mavros/setpoint_velocity/cmd_vel", 10);
-    ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
-            ("mavros/setpoint_position/local", 10);
+    ros::ServiceClient set_hp_client = nh.serviceClient<mavros_msgs::CommandHome>
+            ("mavros/cmd/set_home");
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>
             ("mavros/cmd/arming");
     ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
@@ -45,15 +39,17 @@ int main(int argc, char **argv)
         rate.sleep();
     }
 
-    mavros_msgs::HilGPS hil_gps;
-    hil_gps.header.frame_id = 1;
-    hil_gps.header.stamp = ros::Time::now();
-    hil_gps.header.seq = 1;
-    hil_gps.geo.latitude = 43.663360;
-    hil_gps.geo.longitude = -79.393587;
-    hil_gps.geo.altitude = 97.336;
+    //set home position as current position
+    mavros_msgs::CommandHome set_hp_cmd;
+    set_hp_cmd.request.current_gps = true;
+    while(!set_hp_client.call(set_hp_cmd) && 
+            set_hp_cmd.response.success){
 
-    hil_gps_pub.publish(hil_gps);
+        ROS_INFO("Failed to set home");
+        ros::spinOnce();
+        rate.sleep();
+    }
+    ROS_INFO("HP set");
 
     geometry_msgs::TwistStamped vel;
     vel.header.frame_id = 1;
@@ -63,11 +59,6 @@ int main(int argc, char **argv)
     vel.twist.angular.x = 0;
     vel.twist.angular.y = 0;
     vel.twist.angular.z = 0;
-
-    geometry_msgs::PoseStamped pose;
-    pose.pose.position.x = 0;
-    pose.pose.position.y = 0;
-    pose.pose.position.z = 2;
 
     //send a few setpoints before starting
     int count = 1;
@@ -93,7 +84,6 @@ int main(int argc, char **argv)
             (ros::Time::now() - last_request > ros::Duration(5.0))){
             if( set_mode_client.call(offb_set_mode) &&
                 offb_set_mode.response.mode_sent){
-                ROS_INFO_STREAM("Offboard success?" << offb_set_mode.response.mode_sent);
                 ROS_INFO("Offboard enabled");
             }
             last_request = ros::Time::now();

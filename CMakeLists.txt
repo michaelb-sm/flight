@@ -116,8 +116,14 @@ catkin_package(
 ###########
 
 add_executable(offb_node src/offb_node.cpp)
+add_executable(flight_node src/flight_node.cpp)
+add_executable(gps_node src/gps_node.cpp)
 
 target_link_libraries(offb_node 
+      ${catkin_LIBRARIES})
+target_link_libraries(flight_node
+      ${catkin_LIBRARIES})
+target_link_libraries(gps_node
       ${catkin_LIBRARIES})
 
 ## Specify additional locations of header files
