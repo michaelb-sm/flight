@@ -10,6 +10,7 @@ To generate a fake GPS signal in lieu of a GPS module, run the gps_node.cpp file
 
 Main code lies in either the offb_node.cpp or flight_node.cpp file, which attempt to command a low velocity to the motors. These filesare run as such:
 > rosrun flight offb_node
+
 Or
 > rosrun flight flight_node
 
