@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
             ("mavros/set_mode");
 
-    //the setpoint publishing rate MUST be faster than 2Hz
+    // the setpoint publishing rate MUST be faster than 2Hz
     ros::Rate rate(20.0);
 
     // wait for FCU connection
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
         rate.sleep();
     }
 
-    //set home position as current position
+    // set home position as current position
     mavros_msgs::CommandHome set_hp_cmd;
     set_hp_cmd.request.current_gps = true;
     while(!set_hp_client.call(set_hp_cmd) && 
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     ROS_INFO("HP set");
 
     geometry_msgs::TwistStamped vel;
-    vel.header.frame_id = 1;
+    vel.header.frame_id = "map";
     vel.twist.linear.x = 0;
     vel.twist.linear.y = 0;
     vel.twist.linear.z = 0.1;
