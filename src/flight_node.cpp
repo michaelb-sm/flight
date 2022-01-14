@@ -1,5 +1,6 @@
 /**
  * @file flight_node.cpp
+ * @brief Offboard control command node
  */
 
 #include <ros/ros.h>
@@ -9,6 +10,7 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 
+// Pixhawk flight state
 mavros_msgs::State current_state;
 void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
@@ -39,23 +41,23 @@ int main(int argc, char **argv)
         rate.sleep();
     }
 
-    // set home position as current position
-    mavros_msgs::CommandHome set_hp_cmd;
-    set_hp_cmd.request.current_gps = true;
-    while(!set_hp_client.call(set_hp_cmd) && 
-            set_hp_cmd.response.success){
+    // Set home position as current position
+    // mavros_msgs::CommandHome set_hp_cmd;
+    // set_hp_cmd.request.current_gps = true;
+    // while(!set_hp_client.call(set_hp_cmd) && 
+    //         set_hp_cmd.response.success){
 
-        ROS_INFO("Failed to set home");
-        ros::spinOnce();
-        rate.sleep();
-    }
-    ROS_INFO("HP set");
+    //     ROS_INFO("Failed to set home");
+    //     ros::spinOnce();
+    //     rate.sleep();
+    // }
+    // ROS_INFO("HP set");
 
     geometry_msgs::TwistStamped vel;
     vel.header.frame_id = "map";
     vel.twist.linear.x = 0;
     vel.twist.linear.y = 0;
-    vel.twist.linear.z = 0.1;
+    vel.twist.linear.z = 0.01;
     vel.twist.angular.x = 0;
     vel.twist.angular.y = 0;
     vel.twist.angular.z = 0;
@@ -71,6 +73,7 @@ int main(int argc, char **argv)
         rate.sleep();
     }
 
+    // Set up control mode and arming calls
     mavros_msgs::SetMode offb_set_mode;
     offb_set_mode.request.custom_mode = "OFFBOARD";
 
@@ -80,6 +83,7 @@ int main(int argc, char **argv)
     ros::Time last_request = ros::Time::now();
 
     while(ros::ok()){
+        // Attempt to transition to offboard mode
         if( current_state.mode != "OFFBOARD" &&
             (ros::Time::now() - last_request > ros::Duration(5.0))){
             if( set_mode_client.call(offb_set_mode) &&
@@ -87,7 +91,9 @@ int main(int argc, char **argv)
                 ROS_INFO("Offboard enabled");
             }
             last_request = ros::Time::now();
-        }  else {
+        }
+        // Attempt to arm motors
+        else {
             if( !current_state.armed &&
                 (ros::Time::now() - last_request > ros::Duration(5.0))){
                 if( arming_client.call(arm_cmd) &&
@@ -98,6 +104,7 @@ int main(int argc, char **argv)
             }
         }
 
+        // Send commands to motors
         vel.header.stamp = ros::Time::now();
         vel.header.seq = count;
         velocity_pub.publish(vel);

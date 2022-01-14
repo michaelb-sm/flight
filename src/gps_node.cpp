@@ -1,5 +1,6 @@
 /**
  * @file gps_node.cpp
+ * @brief Offboard position source node with either gps or odometry
  */
 
 #include <ros/ros.h>
@@ -7,13 +8,14 @@
 #include <mavros_msgs/HilGPS.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
+// Pixhawk flight state
 mavros_msgs::State current_state;
 void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
 }
 
+// Realsense T265 odometry
 nav_msgs::Odometry current_odom;
 void camera_cb(const nav_msgs::Odometry::ConstPtr& msg){
     current_odom = *msg;
@@ -36,7 +38,8 @@ int main(int argc, char **argv)
             ("mavros/fake_gps/vision", 10);
     ros::Publisher hil_gps_pub = nh.advertise<mavros_msgs::HilGPS>
             ("/mavros/hil/gps", 10);
-    
+
+
     //the setpoint publishing rate MUST be faster than 2Hz
     ros::Rate rate(5.0);
 
@@ -46,20 +49,15 @@ int main(int argc, char **argv)
         rate.sleep();
     }
 
+    // Position messages
+    // Publish either to /mavros/vision_pose, /mavros/odometry, 
+    //      /mavros/fake_gps, or /mavros/hil/gps
+    
     geometry_msgs::PoseStamped vision_pose;
 
     // nav_msgs::Odometry vision_odom;
 
     // geometry_msgs::PoseStamped fake_gps_pose;
-    // fake_gps_pose.header.frame_id = "map";
-    // fake_gps_pose.pose.position.x = 0;
-    // fake_gps_pose.pose.position.y = 0;
-    // fake_gps_pose.pose.position.z = 0;
-    // fake_gps_pose.pose.orientation.x = 0;
-    // fake_gps_pose.pose.orientation.y = 0;
-    // fake_gps_pose.pose.orientation.z = 0;
-    // fake_gps_pose.pose.orientation.w = 1;
-
 
     // mavros_msgs::HilGPS hil_gps;
     // hil_gps.header.frame_id = "map";
@@ -83,7 +81,8 @@ int main(int argc, char **argv)
         // vision_odom.header.seq = count;
         // vision_odom_pub.publish(vision_odom);
 
-        // fake_gps_pose.header.stamp = ros::Time::now();
+        // fake_gps_pose.header = current_odom.header;
+        // fake_gps_pose.header.frame_id = "map";
         // fake_gps_pose.header.seq = count;
         // fake_gps_pose.pose = current_odom.pose.pose;
         // fake_gps_pub.publish(fake_gps_pose);
