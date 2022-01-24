@@ -38,6 +38,10 @@ $ rosrun flight gps_node
 
 This reads data from the streamed realsense2_camera node (``camera/odom/sample``) and reformats it into a position estimate that the Pixhawk will be able to read. NOTE THAT THE ESTIMATE IS CURRENTLY SENT IN THE "ODOM" FRAME, WHICH IS A PRECONFIGURED PIXHAWK FRAME. IN PRACTICE, A PROPER CAMERA -> PIXHAWK TRANSFORM SHOULD BE INTRODUCED (not investigated thus far).
 
+Note that the gps_node.cpp file contains multiple commented out lines which correspond to different methods of sending position data to the Pixhawk. To date, only sending data on the ``/mavros/vision_pose/pose`` topic has allowed the drone to enter the OFFBOARD flight mode (where it takes motor commands from an external device, a.k.a. the *Jetson Nano*) due to the way Pixhawk fuses data into it's EKF2-based position estimator. 
+
+If you want to change or otherwise reconfigure the settings for the ``vision_pose`` topic (or topics like ``fake_gps`` or ``hil/gps``), take a look at the **fake_gps**, **mocap**, **odometry**, and **vision_pose** plugins in the ``mavros_extras`` package and their corresponding headings in ``mavros/mavros/launch/px4_config.yaml`` file. 
+
 ### The Flight Node
 
 Main code lies in the flight_node.cpp file, which attempts to command a low velocity to the motors. This file is run with:
