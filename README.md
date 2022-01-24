@@ -2,7 +2,13 @@
 Temporary repository for drone work
 
 ## Running Code
-Clone this repo under the catkin_ws/src folder, next to /mavros and /mavlink. Make sure to rebuild and source the catkin workspace. 
+Clone this repo under the catkin_ws/src folder, next to /mavros and /mavlink. Make sure to rebuild:
+
+```shell
+$ catkin build
+```
+
+ and source the catkin workspace. 
 
 ### The MAVROS Node
 
