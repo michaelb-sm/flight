@@ -42,6 +42,7 @@ int main(int argc, char **argv)
     }
 
     // Set home position as current position
+    //      This is only possible with a GPS fix
     // mavros_msgs::CommandHome set_hp_cmd;
     // set_hp_cmd.request.current_gps = true;
     // while(!set_hp_client.call(set_hp_cmd) && 
